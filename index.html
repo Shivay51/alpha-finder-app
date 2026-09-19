@@ -263,6 +263,72 @@
   }
   .logout-link:active{ color:var(--ink-soft); }
 
+  /* ---------- Back button ---------- */
+  .back-btn{
+    flex:none; width:34px; height:34px; margin-right:-2px;
+    border:1px solid var(--line); border-radius:10px; background:var(--surface-2);
+    color:var(--ink); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0;
+  }
+  .back-btn svg{width:18px; height:18px;}
+  .back-btn:active{ background:var(--surface); transform:scale(.94); }
+
+  /* ---------- Home screen tiles ---------- */
+  .home-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+    margin-bottom:16px;
+  }
+  .home-tile{
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column; align-items:flex-start; gap:8px;
+    padding:20px 16px 18px;
+    border-radius:18px; border:1px solid var(--line);
+    background:var(--surface);
+    box-shadow:var(--shadow);
+    cursor:pointer; text-align:left;
+    -webkit-tap-highlight-color:transparent;
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, border-color .2s ease;
+  }
+  .home-tile:active{ transform:scale(.96); }
+  .home-tile-icon{
+    width:46px; height:46px; border-radius:14px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -8px 12px rgba(0,0,0,.14);
+  }
+  .home-tile-icon svg{width:23px; height:23px;}
+  .home-tile-label{
+    font-family:'Fraunces', Georgia, serif; font-weight:700; font-size:15.5px;
+    color:var(--ink); letter-spacing:.01em;
+  }
+  .home-tile-sub{ font-size:11.5px; color:var(--ink-soft); margin-top:-4px; }
+  .home-tile.tile-spot .home-tile-icon{ background:linear-gradient(155deg, var(--gold), var(--gold-strong)); }
+  .home-tile.tile-mcx .home-tile-icon{ background:linear-gradient(155deg, #E8A33D, #F2C069); }
+  .home-tile.tile-nifty .home-tile-icon{ background:linear-gradient(155deg, #3FA97A, var(--support)); }
+  .home-tile.tile-options .home-tile-icon{ background:linear-gradient(155deg, #4A5062, #6B7284); }
+  .home-tile.tile-spot:active, .home-tile.tile-spot:focus-visible{ border-color:rgba(242,179,61,.5); }
+  .home-tile.tile-mcx:active, .home-tile.tile-mcx:focus-visible{ border-color:rgba(232,163,61,.5); }
+  .home-tile.tile-nifty:active, .home-tile.tile-nifty:focus-visible{ border-color:rgba(87,219,152,.5); }
+  .home-tile.tile-options:active, .home-tile.tile-options:focus-visible{ border-color:rgba(107,114,132,.6); }
+  @media (prefers-reduced-motion: no-preference){
+    .home-tile{ animation: riseIn .4s cubic-bezier(.16,1,.3,1) both; }
+    .home-tile:nth-child(1){ animation-delay:.02s; }
+    .home-tile:nth-child(2){ animation-delay:.07s; }
+    .home-tile:nth-child(3){ animation-delay:.12s; }
+    .home-tile:nth-child(4){ animation-delay:.17s; }
+  }
+
+  /* ---------- Options view ---------- */
+  .options-card{ padding:18px; }
+  .options-row{ display:flex; align-items:center; gap:14px; }
+  .options-row-main{ flex:1; min-width:0; }
+  .options-row-title{ font-weight:700; font-size:14.5px; color:var(--ink); }
+  .options-row-sub{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .options-update-btn{ width:auto; margin-top:0; padding:10px 18px; font-size:13px; flex:none; }
+  .options-status{ margin-top:12px; font-size:12px; color:var(--ink-soft); min-height:1px; }
+
+  /* ---------- View fade transition ---------- */
+  #homeView, #calcView, #optionsView{ animation: riseIn .35s cubic-bezier(.16,1,.3,1) both; }
+
   /* ---------- Login gate ---------- */
   #loginGate{
     position:fixed; inset:0; z-index:9998;
@@ -285,7 +351,7 @@
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.35);
   }
   .login-icon svg{width:26px; height:26px;}
-  .login-title{font-family:'Fraunces', Georgia, serif; font-weight:700; font-size:18px; text-align:center;}
+  .login-title{font-family:'Fraunces', Georgia, serif; font-weight:700; font-size:19px; text-align:center; line-height:1.3;}
   .login-sub{font-size:12px; color:var(--ink-soft); text-align:center; margin-bottom:14px;}
   .login-card .field{width:100%; margin-bottom:11px; flex:none; display:block;}
   .login-card input[type="text"], .login-card input[type="password"]{
@@ -405,7 +471,7 @@
         <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
     </div>
-    <div class="login-title">Arjun's Alpha Finder</div>
+    <div class="login-title">Welcome to Arjun's Alpha Finder</div>
     <div class="login-sub">Private &mdash; log in to continue</div>
     <div id="loginFields">
       <div class="field">
@@ -438,32 +504,45 @@
 </div>
 
 <header class="app-header">
-  <div class="app-icon">
+  <button type="button" class="back-btn" id="backBtn" hidden aria-label="Back">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 5L8 12L15 19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="app-icon" id="appIconBadge">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M4 17L9 10L13 14L20 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M15 5H20V10" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </div>
   <div class="app-titles">
-    <h1>Gold S/R</h1>
-    <div class="tagline">Support &amp; Resistance Finder</div>
+    <h1 id="headerTitle">Arjun's Alpha</h1>
+    <div class="tagline" id="headerTagline">Home</div>
   </div>
   <button type="button" class="logout-link" id="logoutBtn">Log out</button>
 </header>
 
-<div class="ticker" id="ticker">
-  <span class="ticker-dot"></span>
-  <span class="ticker-label">REF</span>
-  <span class="ticker-value num" id="tickerMid">&mdash;</span>
-  <span class="ticker-sep">&middot;</span>
-  <span class="ticker-label">RANGE</span>
-  <span class="ticker-value num" id="tickerRange">&mdash;</span>
-</div>
+<div id="homeView">
 
-<div class="trend-badge" id="trendBadge">
-  <span class="trend-arrow" id="trendArrow">&mdash;</span>
-  <span id="trendText">Loading trend&hellip;</span>
-  <span class="trend-note" id="trendNote"></span>
+<div class="home-grid" id="homeGrid" role="navigation">
+  <button type="button" class="home-tile tile-spot" data-target="spot">
+    <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17L9 10L13 14L21 5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 5H21V10" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="home-tile-label">SPOT</span>
+    <span class="home-tile-sub">Gold (USD) S/R</span>
+  </button>
+  <button type="button" class="home-tile tile-mcx" data-target="mcx">
+    <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" stroke="#fff" stroke-width="2"/><path d="M9.5 14.5c.5 1 1.4 1.5 2.5 1.5 1.7 0 2.5-.8 2.5-1.8 0-2.5-5-1.2-5-3.7 0-1 .8-1.8 2.5-1.8 1.1 0 2 .5 2.5 1.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+    <span class="home-tile-label">MCX GOLD</span>
+    <span class="home-tile-sub">India (&#8377;) S/R</span>
+  </button>
+  <button type="button" class="home-tile tile-nifty" data-target="nifty">
+    <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="12" width="3.4" height="8" rx="1" stroke="#fff" stroke-width="1.8"/><rect x="10.3" y="7" width="3.4" height="13" rx="1" stroke="#fff" stroke-width="1.8"/><rect x="16.6" y="3.5" width="3.4" height="16.5" rx="1" stroke="#fff" stroke-width="1.8"/></svg></span>
+    <span class="home-tile-label">NIFTY</span>
+    <span class="home-tile-sub">Index S/R</span>
+  </button>
+  <button type="button" class="home-tile tile-options" data-target="options">
+    <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="#fff" stroke-width="1.8"/><path d="M19.4 13.5a1.7 1.7 0 000-3l-.9-.2a6.9 6.9 0 00-.6-1.5l.5-.8a1.7 1.7 0 00-2.4-2.4l-.8.5a6.9 6.9 0 00-1.5-.6l-.2-.9a1.7 1.7 0 00-3.4 0l-.2.9a6.9 6.9 0 00-1.5.6l-.8-.5a1.7 1.7 0 00-2.4 2.4l.5.8a6.9 6.9 0 00-.6 1.5l-.9.2a1.7 1.7 0 000 3.4l.9.2a6.9 6.9 0 00.6 1.5l-.5.8a1.7 1.7 0 002.4 2.4l.8-.5a6.9 6.9 0 001.5.6l.2.9a1.7 1.7 0 003.4 0l.2-.9a6.9 6.9 0 001.5-.6l.8.5a1.7 1.7 0 002.4-2.4l-.5-.8a6.9 6.9 0 00.6-1.5z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+    <span class="home-tile-label">OPTIONS</span>
+    <span class="home-tile-sub">Update &amp; more</span>
+  </button>
 </div>
 
 <div class="a2hs card" id="a2hsBanner" hidden>
@@ -482,10 +561,36 @@
   </div>
 </div>
 
-<div class="market-toggle" id="marketToggle" role="tablist">
-  <button type="button" class="market-btn active" id="marketSpotBtn" data-market="spot">Spot (USD)</button>
-  <button type="button" class="market-btn" id="marketMcxBtn" data-market="mcx">MCX (₹)</button>
-  <button type="button" class="market-btn" id="marketNiftyBtn" data-market="nifty">NIFTY 50</button>
+</div>
+
+<div id="optionsView" hidden>
+  <div class="card options-card">
+    <div class="options-row">
+      <div class="options-row-main">
+        <div class="options-row-title">Update App</div>
+        <div class="options-row-sub">Clear cached data and load the newest version</div>
+      </div>
+      <button type="button" class="calc-btn options-update-btn" id="updateAppBtn">Update</button>
+    </div>
+    <div class="options-status" id="updateStatus"></div>
+  </div>
+</div>
+
+<div id="calcView" hidden>
+
+<div class="ticker" id="ticker">
+  <span class="ticker-dot"></span>
+  <span class="ticker-label">REF</span>
+  <span class="ticker-value num" id="tickerMid">&mdash;</span>
+  <span class="ticker-sep">&middot;</span>
+  <span class="ticker-label">RANGE</span>
+  <span class="ticker-value num" id="tickerRange">&mdash;</span>
+</div>
+
+<div class="trend-badge" id="trendBadge">
+  <span class="trend-arrow" id="trendArrow">&mdash;</span>
+  <span id="trendText">Loading trend&hellip;</span>
+  <span class="trend-note" id="trendNote"></span>
 </div>
 
 <section class="card input-card">
@@ -536,6 +641,8 @@
 <div class="card chart-card" id="priceChartCard" hidden>
   <div class="chart-title">Price Ladder</div>
   <svg class="price-chart-svg" id="priceChartSvg" viewBox="0 0 320 260" preserveAspectRatio="xMidYMid meet"></svg>
+</div>
+
 </div>
 
 <script>
@@ -618,6 +725,15 @@
   var elCpSuccess = document.getElementById('cpSuccess');
   var elCpSaveBtn = document.getElementById('cpSaveBtn');
   var elCpCancelBtn = document.getElementById('cpCancelBtn');
+  var elBackBtn = document.getElementById('backBtn');
+  var elHeaderTitle = document.getElementById('headerTitle');
+  var elHeaderTagline = document.getElementById('headerTagline');
+  var elHomeView = document.getElementById('homeView');
+  var elCalcView = document.getElementById('calcView');
+  var elOptionsView = document.getElementById('optionsView');
+  var elHomeGrid = document.getElementById('homeGrid');
+  var elUpdateAppBtn = document.getElementById('updateAppBtn');
+  var elUpdateStatus = document.getElementById('updateStatus');
 
   // ---------- Login (client-side only: a privacy gate for a shared link,
   // not real server-side security -- anyone with the file's source can
@@ -721,6 +837,7 @@
     }catch(e){}
     hideLoginGate();
     startSessionWatch();
+    showView('home');
   }
 
   function doLogout(){
@@ -1190,6 +1307,71 @@
     updateMethodNote();
   }
 
+  // ---------- Home screen navigation (Login -> Home -> Spot/MCX Gold/Nifty/Options) ----------
+  var MARKET_TITLES = { spot: 'Spot Gold', mcx: 'MCX Gold', nifty: 'Nifty 50' };
+  var currentView = 'home';
+
+  function showView(view){
+    currentView = view;
+    if(elHomeView){ elHomeView.hidden = (view !== 'home'); }
+    if(elCalcView){ elCalcView.hidden = (view !== 'spot' && view !== 'mcx' && view !== 'nifty'); }
+    if(elOptionsView){ elOptionsView.hidden = (view !== 'options'); }
+    if(elBackBtn){ elBackBtn.hidden = (view === 'home'); }
+
+    if(view === 'home'){
+      if(elHeaderTitle){ elHeaderTitle.textContent = "Arjun's Alpha"; }
+      if(elHeaderTagline){ elHeaderTagline.textContent = 'Home'; }
+    } else if(view === 'options'){
+      if(elHeaderTitle){ elHeaderTitle.textContent = 'Options'; }
+      if(elHeaderTagline){ elHeaderTagline.textContent = 'Update & settings'; }
+      if(elUpdateStatus){ elUpdateStatus.textContent = ''; }
+    } else {
+      setMarket(view);
+      if(elHeaderTitle){ elHeaderTitle.textContent = MARKET_TITLES[view] || "Arjun's Alpha"; }
+      if(elHeaderTagline){ elHeaderTagline.textContent = 'Support & Resistance Finder'; }
+    }
+    try{ window.scrollTo(0, 0); }catch(e){}
+  }
+
+  function setupHomeNav(){
+    if(elHomeGrid){
+      var tiles = elHomeGrid.querySelectorAll('.home-tile');
+      for(var i = 0; i < tiles.length; i++){
+        (function(tile){
+          var target = tile.getAttribute('data-target');
+          tile.addEventListener('click', function(){ showView(target); });
+        })(tiles[i]);
+      }
+    }
+    if(elBackBtn){ elBackBtn.addEventListener('click', function(){ showView('home'); }); }
+  }
+
+  // ---------- Update App (Options page): clears any cached service-worker
+  // data and reloads from the network so the device always ends up on the
+  // latest published version -- there is no separate "app version number",
+  // this simply forces a fresh fetch instead of relying on the cache. ----------
+  function updateApp(){
+    if(elUpdateAppBtn){ elUpdateAppBtn.disabled = true; }
+    if(elUpdateStatus){ elUpdateStatus.textContent = 'Checking for the latest version…'; }
+    var p = Promise.resolve();
+    if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
+      p = p.then(function(){ return navigator.serviceWorker.getRegistrations(); })
+           .then(function(regs){ return Promise.all(regs.map(function(r){ return r.unregister(); })); })
+           .catch(function(){});
+    }
+    if('caches' in window){
+      p = p.then(function(){ return caches.keys(); })
+           .then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); })
+           .catch(function(){});
+    }
+    p.catch(function(){}).then(function(){
+      if(elUpdateStatus){ elUpdateStatus.textContent = 'Updating…'; }
+      setTimeout(function(){
+        location.href = location.pathname + '?_u=' + Date.now();
+      }, 300);
+    });
+  }
+
   // ---------- Add to Home Screen banner ----------
   function setupA2HS(){
     var banner = document.getElementById('a2hsBanner');
@@ -1369,12 +1551,14 @@
     if(isLoggedIn()){
       hideLoginGate();
       startSessionWatch();
+      showView('home');
     } else {
       showLoginGate();
     }
     d('login-ok');
   }catch(e){ d('login-ERR:' + (e && e.message ? e.message : e)); showFatalError('login setup', e); }
 
+  try{ setupHomeNav(); if(elUpdateAppBtn){ elUpdateAppBtn.addEventListener('click', updateApp); } d('nav-ok'); }catch(e){ d('nav-ERR:' + (e && e.message ? e.message : e)); showFatalError('home navigation setup', e); }
   try{ setupMarketToggle(); d('market-ok'); }catch(e){ d('market-ERR:' + (e && e.message ? e.message : e)); showFatalError('market toggle setup', e); }
   try{ loadSaved(); d('loaded'); }catch(e){ d('loadSaved-ERR:' + (e && e.message ? e.message : e)); showFatalError('loading saved values', e); }
   try{ recompute(); d('first-calc-ok'); }catch(e){ d('first-calc-ERR:' + (e && e.message ? e.message : e)); showFatalError('calculating levels', e); }
