@@ -294,11 +294,17 @@
     background:var(--surface-2); color:var(--ink); width:100%;
   }
   .login-card input:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold);}
-  .remember-row{
-    width:100%; display:flex; align-items:center; gap:8px;
-    margin:2px 0 14px; font-size:12.5px; color:var(--ink-soft);
+  .change-pass-link{
+    width:100%; margin-top:10px; border:none; background:none; cursor:pointer;
+    font-family:inherit; font-size:12px; font-weight:600; color:var(--gold);
+    padding:6px 8px; text-align:center;
   }
-  .remember-row input{width:15px; height:15px; accent-color:var(--gold);}
+  .change-pass-link:active{ opacity:.7; }
+  .cp-success{
+    width:100%; font-size:12px; color:var(--support); margin-bottom:10px;
+    display:none; text-align:center;
+  }
+  .cp-success.show{display:block;}
   .login-error{
     width:100%; font-size:12px; color:var(--resist); margin-bottom:10px;
     display:none; text-align:center;
@@ -310,7 +316,7 @@
     border:1px solid rgba(255,122,107,.25); margin-bottom:14px; line-height:1.6; display:none;
   }
   .login-locked-note.show{display:block;}
-  .login-card.locked input, .login-card.locked #loginBtn{ opacity:.4; pointer-events:none; }
+  .login-card.locked input, .login-card.locked button{ opacity:.4; pointer-events:none; }
 
   /* ---------- Splash screen ---------- */
   #splash{
@@ -401,19 +407,33 @@
     </div>
     <div class="login-title">Arjun's Alpha Finder</div>
     <div class="login-sub">Private &mdash; log in to continue</div>
-    <div class="field">
-      <input type="text" id="loginUser" placeholder="Username" autocapitalize="off" autocomplete="username">
+    <div id="loginFields">
+      <div class="field">
+        <input type="text" id="loginUser" placeholder="Username" autocapitalize="off" autocomplete="username">
+      </div>
+      <div class="field">
+        <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <div class="login-error" id="loginError">Wrong username or password.</div>
+      <div class="login-locked-note" id="loginLockedNote">Locked after 2 wrong attempts. Contact the admin (Arjun) to unlock this device.</div>
+      <button type="button" class="calc-btn" id="loginBtn">Log In</button>
+      <button type="button" class="change-pass-link" id="changePasswordLink">Change Password</button>
     </div>
-    <div class="field">
-      <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" inputmode="numeric" pattern="[0-9]*">
+    <div id="changePasswordFields" hidden>
+      <div class="field">
+        <input type="password" id="cpCurrent" placeholder="Current Password" autocomplete="current-password" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <div class="field">
+        <input type="password" id="cpNew" placeholder="New Password" autocomplete="new-password" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <div class="field">
+        <input type="password" id="cpConfirm" placeholder="Confirm New Password" autocomplete="new-password" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <div class="login-error" id="cpError">Current password is wrong.</div>
+      <div class="cp-success" id="cpSuccess">Password changed. Log in with your new password.</div>
+      <button type="button" class="calc-btn" id="cpSaveBtn">Save New Password</button>
+      <button type="button" class="change-pass-link" id="cpCancelBtn">Cancel</button>
     </div>
-    <div class="login-error" id="loginError">Wrong username or password.</div>
-    <div class="login-locked-note" id="loginLockedNote">Locked after 2 wrong attempts. Contact the admin (Arjun) to unlock this device.</div>
-    <label class="remember-row">
-      <input type="checkbox" id="loginRemember">
-      <span>Remember me on this device</span>
-    </label>
-    <button type="button" class="calc-btn" id="loginBtn">Log In</button>
   </div>
 </div>
 
@@ -586,22 +606,44 @@
   var elLoginError = document.getElementById('loginError');
   var elLoginLockedNote = document.getElementById('loginLockedNote');
   var elLoginCard = document.querySelector('.login-card');
-  var elLoginRemember = document.getElementById('loginRemember');
   var elLoginBtn = document.getElementById('loginBtn');
   var elLogoutBtn = document.getElementById('logoutBtn');
+  var elLoginFields = document.getElementById('loginFields');
+  var elChangePasswordFields = document.getElementById('changePasswordFields');
+  var elChangePasswordLink = document.getElementById('changePasswordLink');
+  var elCpCurrent = document.getElementById('cpCurrent');
+  var elCpNew = document.getElementById('cpNew');
+  var elCpConfirm = document.getElementById('cpConfirm');
+  var elCpError = document.getElementById('cpError');
+  var elCpSuccess = document.getElementById('cpSuccess');
+  var elCpSaveBtn = document.getElementById('cpSaveBtn');
+  var elCpCancelBtn = document.getElementById('cpCancelBtn');
 
   // ---------- Login (client-side only: a privacy gate for a shared link,
   // not real server-side security -- anyone with the file's source can
-  // read these values. Good enough to keep a casual visitor out. ----------
+  // read these values. Good enough to keep a casual visitor out. No
+  // "remember me" -- closing/backgrounding the app or a 5-minute idle gap
+  // both end the session immediately (see visibilitychange/pagehide below
+  // and SESSION_MS). Each device can set its own password via "Change
+  // Password" (stored locally as gold_sr_password_override) instead of the
+  // shared default -- the admin's "?unlock=1" link also resets a device
+  // back to the default password, in case someone forgets their own. ------
   var CREDENTIALS = [
     { u: 'Admin', p: '0555' }
   ];
-  var SESSION_MS = 15 * 60 * 1000; // 15 minutes
+  var SESSION_MS = 5 * 60 * 1000; // 5 minutes
   var MAX_ATTEMPTS = 2; // lock the device after this many wrong passwords in a row
+
+  function getActivePassword(){
+    try{
+      var override = localStorage.getItem('gold_sr_password_override');
+      if(override) return override;
+    }catch(e){}
+    return CREDENTIALS[0].p;
+  }
 
   function isLoggedIn(){
     try{
-      if(localStorage.getItem('gold_sr_remember') === '1') return true;
       var loginAt = parseInt(localStorage.getItem('gold_sr_loginAt') || '0', 10);
       if(loginAt && (Date.now() - loginAt) < SESSION_MS) return true;
     }catch(e){}
@@ -613,7 +655,9 @@
   // localStorage flag, per-device/per-browser) and the normal login form is
   // disabled. There is no self-service reset -- only the admin can unlock a
   // device, by sending it this same link with "?unlock=1" appended once,
-  // which clears the lock the moment the page loads.
+  // which clears the lock the moment the page loads. This also resets that
+  // device back to the shared default password, in case the person had set
+  // their own with Change Password and forgot it.
   function isLocked(){
     try{ return localStorage.getItem('gold_sr_locked') === '1'; }catch(e){ return false; }
   }
@@ -626,6 +670,7 @@
       if(params.get('unlock') === '1'){
         localStorage.removeItem('gold_sr_locked');
         localStorage.removeItem('gold_sr_fail_count');
+        localStorage.removeItem('gold_sr_password_override');
         var url = new URL(location.href);
         url.searchParams.delete('unlock');
         history.replaceState({}, '', url.toString());
@@ -653,7 +698,7 @@
     var p = (elLoginPass && elLoginPass.value || '').trim();
     var ok = false;
     for(var i = 0; i < CREDENTIALS.length; i++){
-      if(CREDENTIALS[i].u === u && CREDENTIALS[i].p === p){ ok = true; break; }
+      if(CREDENTIALS[i].u === u && getActivePassword() === p){ ok = true; break; }
     }
     if(!ok){
       var fails = 0;
@@ -672,11 +717,6 @@
     if(elLoginError){ elLoginError.className = 'login-error'; }
     try{
       localStorage.removeItem('gold_sr_fail_count');
-      if(elLoginRemember && elLoginRemember.checked){
-        localStorage.setItem('gold_sr_remember', '1');
-      } else {
-        localStorage.removeItem('gold_sr_remember');
-      }
       localStorage.setItem('gold_sr_loginAt', String(Date.now()));
     }catch(e){}
     hideLoginGate();
@@ -685,12 +725,53 @@
 
   function doLogout(){
     try{
-      localStorage.removeItem('gold_sr_remember');
       localStorage.removeItem('gold_sr_loginAt');
     }catch(e){}
     if(elLoginUser){ elLoginUser.value = ''; }
     if(elLoginPass){ elLoginPass.value = ''; }
+    hideChangePasswordForm();
     showLoginGate();
+  }
+
+  // ---------- Change Password (per-device only -- there is no backend, so
+  // this only changes the password THIS device checks against; it does not
+  // affect other people's devices or the shared default). ----------
+  function showChangePasswordForm(){
+    if(isLocked()) return;
+    if(elLoginFields){ elLoginFields.hidden = true; }
+    if(elChangePasswordFields){ elChangePasswordFields.hidden = false; }
+    if(elCpError){ elCpError.className = 'login-error'; }
+    if(elCpSuccess){ elCpSuccess.className = 'cp-success'; }
+    if(elCpCurrent){ elCpCurrent.value = ''; }
+    if(elCpNew){ elCpNew.value = ''; }
+    if(elCpConfirm){ elCpConfirm.value = ''; }
+  }
+  function hideChangePasswordForm(){
+    if(elChangePasswordFields){ elChangePasswordFields.hidden = true; }
+    if(elLoginFields){ elLoginFields.hidden = false; }
+  }
+  function attemptChangePassword(){
+    var cur = (elCpCurrent && elCpCurrent.value || '').trim();
+    var next = (elCpNew && elCpNew.value || '').trim();
+    var confirm = (elCpConfirm && elCpConfirm.value || '').trim();
+    if(elCpError){ elCpError.className = 'login-error'; }
+    if(elCpSuccess){ elCpSuccess.className = 'cp-success'; }
+
+    if(cur !== getActivePassword()){
+      if(elCpError){ elCpError.textContent = 'Current password is wrong.'; elCpError.className = 'login-error show'; }
+      return;
+    }
+    if(!next){
+      if(elCpError){ elCpError.textContent = 'Enter a new password.'; elCpError.className = 'login-error show'; }
+      return;
+    }
+    if(next !== confirm){
+      if(elCpError){ elCpError.textContent = 'New password and confirm password do not match.'; elCpError.className = 'login-error show'; }
+      return;
+    }
+    try{ localStorage.setItem('gold_sr_password_override', next); }catch(e){}
+    if(elCpSuccess){ elCpSuccess.textContent = 'Password changed. Log in with your new password.'; elCpSuccess.className = 'cp-success show'; }
+    setTimeout(hideChangePasswordForm, 1400);
   }
 
   var sessionWatchTimer = null;
@@ -1264,6 +1345,25 @@
       });
     }
     if(elLogoutBtn){ elLogoutBtn.addEventListener('click', doLogout); }
+    if(elChangePasswordLink){ elChangePasswordLink.addEventListener('click', showChangePasswordForm); }
+    if(elCpCancelBtn){ elCpCancelBtn.addEventListener('click', hideChangePasswordForm); }
+    if(elCpSaveBtn){ elCpSaveBtn.addEventListener('click', attemptChangePassword); }
+    if(elCpConfirm){
+      elCpConfirm.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.keyCode === 13){ attemptChangePassword(); }
+      });
+    }
+
+    // Instant logout the moment the app is backgrounded, switched away from,
+    // or closed -- not just after the 5-minute idle timeout.
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState === 'hidden'){
+        try{ localStorage.removeItem('gold_sr_loginAt'); }catch(e){}
+      }
+    });
+    window.addEventListener('pagehide', function(){
+      try{ localStorage.removeItem('gold_sr_loginAt'); }catch(e){}
+    });
 
     checkUnlockParam();
     if(isLoggedIn()){
