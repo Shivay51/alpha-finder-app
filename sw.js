@@ -2,7 +2,7 @@
 // still open (last-loaded version) with no signal, and so Chrome/Android
 // treats this as a real installable PWA. Cache-first for the app shell,
 // falls back to network for anything else.
-var CACHE_NAME = 'alpha-finder-v1';
+var CACHE_NAME = 'alpha-finder-v2';
 var SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-512-maskable.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function(event){
