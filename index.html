@@ -1,4 +1,5 @@
 <title>Arjun's Alpha Finder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,6 +30,23 @@
   }
 
   *{box-sizing:border-box;}
+  html, body{
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color:transparent;
+    -webkit-touch-callout:none;
+    touch-action:manipulation;
+  }
+  body{
+    -webkit-user-select:none;
+    user-select:none;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  body::-webkit-scrollbar{ display:none; }
+  input, textarea{
+    -webkit-user-select:text;
+    user-select:text;
+  }
   body{
     background:
       radial-gradient(620px 320px at 50% -80px, var(--glow), transparent 70%),
