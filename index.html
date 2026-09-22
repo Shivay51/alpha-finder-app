@@ -763,17 +763,34 @@
   // shared default -- the admin's "?unlock=1" link also resets a device
   // back to the default password, in case someone forgets their own. ------
   var CREDENTIALS = [
-    { u: 'Admin', p: '0555' }
+    { u: 'Admin', p: '0555' },
+    { u: '2121', p: '2121' }
   ];
   var SESSION_MS = 5 * 60 * 1000; // 5 minutes
   var MAX_ATTEMPTS = 2; // lock the device after this many wrong passwords in a row
 
-  function getActivePassword(){
+  function getDefaultPasswordFor(u){
+    for(var i = 0; i < CREDENTIALS.length; i++){
+      if(CREDENTIALS[i].u === u) return CREDENTIALS[i].p;
+    }
+    return CREDENTIALS[0].p;
+  }
+  function getActivePassword(u){
     try{
       var override = localStorage.getItem('gold_sr_password_override');
       if(override) return override;
     }catch(e){}
-    return CREDENTIALS[0].p;
+    return getDefaultPasswordFor(u);
+  }
+  function isKnownCurrentPassword(p){
+    try{
+      var override = localStorage.getItem('gold_sr_password_override');
+      if(override) return p === override;
+    }catch(e){}
+    for(var i = 0; i < CREDENTIALS.length; i++){
+      if(p === CREDENTIALS[i].p) return true;
+    }
+    return false;
   }
 
   function isLoggedIn(){
@@ -832,7 +849,7 @@
     var p = (elLoginPass && elLoginPass.value || '').trim();
     var ok = false;
     for(var i = 0; i < CREDENTIALS.length; i++){
-      if(CREDENTIALS[i].u === u && getActivePassword() === p){ ok = true; break; }
+      if(CREDENTIALS[i].u === u && getActivePassword(u) === p){ ok = true; break; }
     }
     if(!ok){
       var fails = 0;
@@ -892,7 +909,7 @@
     if(elCpError){ elCpError.className = 'login-error'; }
     if(elCpSuccess){ elCpSuccess.className = 'cp-success'; }
 
-    if(cur !== getActivePassword()){
+    if(!isKnownCurrentPassword(cur)){
       if(elCpError){ elCpError.textContent = 'Current password is wrong.'; elCpError.className = 'login-error show'; }
       return;
     }
